@@ -63,10 +63,21 @@ export function describeDomain(domain) {
     };
 }
 
-// A cleartext request to anything other than a local address is blocked outright by iOS App
-// Transport Security, and by Android's default network security config. Both surface as an
-// indistinguishable transport failure, so flag the condition rather than trying to detect it.
-export function isLikelyCleartextBlocked({ scheme, address_range, host_type }) {
-    if (scheme !== 'http') return false;
-    return address_range === 'public' || host_type === 'hostname';
+// How loud the warning before an http:// login should be. `local` is a target on the user's own
+// network. `other` is everything else, including every dotted hostname, because a name alone
+// cannot say whether it resolves to a private address.
+//
+// This does not decide what is allowed; the platform does. Measured on iOS 26.5 and 27.0 with
+// the app's ATS settings, App Transport Security permits cleartext to private IP literals,
+// unqualified names and .local names, and refuses public IP literals and dotted hostnames.
+// Android makes no such distinction: a network security config cannot express address ranges,
+// so it permits or blocks cleartext for every host alike. On iOS a local target also needs the
+// local network permission. iOS offers no API to read it, so a declined prompt can only be named
+// as a likely cause of a failure, not detected.
+//
+// CGNAT, IPv6 unique-local and other special-use ranges count as `other` until a user reports one.
+export function addressGroup({ host_type, address_range }) {
+    if (host_type === 'ipv4') return address_range === 'public' ? 'other' : 'local';
+    if (host_type === 'localhost' || host_type === 'mdns-local' || host_type === 'unqualified-hostname') return 'local';
+    return 'other';
 }
