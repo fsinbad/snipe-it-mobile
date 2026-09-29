@@ -12,6 +12,9 @@ would be most useful and should be higher priorities, please open up a feature r
 
 The roadmap will be updated as we go and priorities evolve.  
 
+## Deployments
+[Snipe-IT Mobile Deployments](https://gist.github.com/spencerrlongg/04a4aef25f4763d3a9b7771be6385e32) lists the newest build on each test channel and which update it runs. It is rewritten after every build or update.
+
 ## Current Features
 - Login via OAuth or Bearer token 
 - QR/barcode scanner from the home tab, resolves directly to an asset
