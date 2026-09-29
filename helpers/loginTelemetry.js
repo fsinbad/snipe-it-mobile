@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/react-native';
-import { describeDomain, isLikelyCleartextBlocked, parseHost } from '@/helpers/domainShape';
+import { addressGroup, describeDomain, parseHost } from '@/helpers/domainShape';
 import { stripKnownHost } from '@/helpers/sentryScrub';
 
 // Every login failure is reported through here so the tags are consistent across the OAuth
@@ -76,7 +76,7 @@ export function reportLoginFailure({ stage, error, domain, level = 'error', extr
             // like this one reach the event only by being copied here explicitly.
             error_code: error?.code ?? null,
             response_status: error?.response?.status ?? null,
-            likely_cleartext_blocked: isLikelyCleartextBlocked(shape),
+            address_group: addressGroup(shape),
             ...extra,
         },
     }));
