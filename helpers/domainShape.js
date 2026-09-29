@@ -71,9 +71,9 @@ export function describeDomain(domain) {
 // the app's ATS settings, App Transport Security permits cleartext to private IP literals,
 // unqualified names and .local names, and refuses public IP literals and dotted hostnames.
 // Android makes no such distinction: a network security config cannot express address ranges,
-// so it permits or blocks cleartext for every host alike. On iOS a local target also needs the
-// local network permission. iOS offers no API to read it, so a declined prompt can only be named
-// as a likely cause of a failure, not detected.
+// so it permits or blocks cleartext for every host alike. On iOS a target on the phone's own
+// subnet, or a .local name, also needs the local network permission; see
+// mayNeedLocalNetworkPermission in oauthClientDiscovery.js.
 //
 // CGNAT, IPv6 unique-local and other special-use ranges count as `other` until a user reports one.
 export function addressGroup({ host_type, address_range }) {

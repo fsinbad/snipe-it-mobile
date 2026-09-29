@@ -6,7 +6,7 @@ import BearerTokenLogin from "@/components/auth/BearerTokenLogin";
 import { useColors } from "@/hooks/useThemeColors";
 import { Spacing, BorderRadius, Typography } from "@/constants/sizes";
 import { useTranslation } from "react-i18next";
-import { discoverOAuthClient } from "@/helpers/oauthClientDiscovery";
+import { discoverOAuthClient, mayNeedLocalNetworkPermission } from "@/helpers/oauthClientDiscovery";
 import { addLoginBreadcrumb } from "@/helpers/loginTelemetry";
 import { describeDomain } from "@/helpers/domainShape";
 import { normalizeDomain } from "@/helpers/normalizeDomain";
@@ -105,7 +105,9 @@ const LoginForm = ({ onBearerLogin, onDomainChange }) => {
         const generation = ++checkGeneration.current;
         setPhase(PHASE.CHECKING);
         try {
-            const result = await discoverOAuthClient(baseUrl);
+            const result = await discoverOAuthClient(baseUrl, {
+                isCurrent: () => generation === checkGeneration.current,
+            });
             if (generation !== checkGeneration.current) return;
             if (result) {
                 setClientId(result.clientId);
@@ -196,6 +198,9 @@ const LoginForm = ({ onBearerLogin, onDomainChange }) => {
             {phase === PHASE.ERROR && (
                 <>
                     <Text style={styles.errorText}>{t('mobile.connection_error_message')}</Text>
+                    {mayNeedLocalNetworkPermission(domain) && (
+                        <Text style={styles.fieldNote}>{t('mobile.local_network_permission_hint')}</Text>
+                    )}
                     <Button title={t('mobile.retry')} onPress={() => setPhase(PHASE.DOMAIN)} />
                 </>
             )}
