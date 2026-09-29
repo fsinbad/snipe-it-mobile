@@ -95,6 +95,7 @@
     "domain": "Domain",
     "domain_placeholder": "https://snipeit.example.com",
     "domain_assumed_https": "https:// was added to the address.",
+    "unencrypted_connection_note": "This connection is not encrypted. Anyone on your network could read your login and data.",
     "invalid_domain_message": "Enter your Snipe-IT address as a URL, like https://snipeit.example.com.",
     "login_failed": "Login Failed",
     "login_failed_message": "Please check your domain",

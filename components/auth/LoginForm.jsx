@@ -8,7 +8,7 @@ import { Spacing, BorderRadius, Typography } from "@/constants/sizes";
 import { useTranslation } from "react-i18next";
 import { discoverOAuthClient, mayNeedLocalNetworkPermission } from "@/helpers/oauthClientDiscovery";
 import { addLoginBreadcrumb } from "@/helpers/loginTelemetry";
-import { describeDomain } from "@/helpers/domainShape";
+import { addressGroup, describeDomain } from "@/helpers/domainShape";
 import { normalizeDomain } from "@/helpers/normalizeDomain";
 
 const PHASE = {
@@ -88,11 +88,16 @@ const LoginForm = ({ onBearerLogin, onDomainChange }) => {
 
     const isDomainBlank = domain.trim() === '';
 
+    // Read from the field on every render, so the note is on screen before Continue is pressed:
+    // pressing it is the consent, and nothing is stored.
+    const domainShape = describeDomain(domain);
+    const isUnencryptedLocal = domainShape.scheme === 'http' && addressGroup(domainShape) === 'local';
+
     const handleContinue = async () => {
         if (isDomainBlank) return;
         // The shape of what was typed is the single most useful thing to know when a login
         // fails, and it identifies nothing. See helpers/domainShape.js.
-        addLoginBreadcrumb('Continue pressed', describeDomain(domain));
+        addLoginBreadcrumb('Continue pressed', domainShape);
 
         const { baseUrl, addedScheme, error } = normalizeDomain(domain);
         if (error) {
@@ -143,6 +148,10 @@ const LoginForm = ({ onBearerLogin, onDomainChange }) => {
 
             {schemeWasAdded && (
                 <Text style={styles.fieldNote}>{t('mobile.domain_assumed_https')}</Text>
+            )}
+
+            {isUnencryptedLocal && (
+                <Text style={styles.fieldNote}>{t('mobile.unencrypted_connection_note')}</Text>
             )}
 
             {phase === PHASE.DOMAIN && isDomainInvalid && (
