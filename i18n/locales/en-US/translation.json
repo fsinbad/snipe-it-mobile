@@ -97,6 +97,7 @@
     "domain_assumed_https": "https:// was added to the address.",
     "unencrypted_connection_note": "This connection is not encrypted. Anyone on your network could read your login and data.",
     "invalid_domain_message": "Enter your Snipe-IT address as a URL, like https://snipeit.example.com.",
+    "cleartext_not_local_message": "http:// only works for a server on your local network. Use https://, or your server's private IP address, like http://192.168.1.10.",
     "login_failed": "Login Failed",
     "login_failed_message": "Please check your domain",
     "welcome": "Welcome to Snipe-IT Mobile!",

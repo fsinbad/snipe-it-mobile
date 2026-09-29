@@ -29,7 +29,8 @@ const LoginForm = ({ onBearerLogin, onDomainChange }) => {
     const [clientId, setClientId] = useState(null);
     const [showManualOAuth, setShowManualOAuth] = useState(false);
     const [manualClientId, setManualClientId] = useState('');
-    const [isDomainInvalid, setIsDomainInvalid] = useState(false);
+    // Why Continue sent no request: normalizeDomain's error code, or 'cleartext-not-local'.
+    const [domainRejection, setDomainRejection] = useState(null);
     const [schemeWasAdded, setSchemeWasAdded] = useState(false);
     const checkGeneration = useRef(0);
 
@@ -66,7 +67,7 @@ const LoginForm = ({ onBearerLogin, onDomainChange }) => {
         setClientId(null);
         setShowManualOAuth(false);
         setManualClientId('');
-        setIsDomainInvalid(false);
+        setDomainRejection(null);
         setSchemeWasAdded(false);
     };
 
@@ -101,11 +102,19 @@ const LoginForm = ({ onBearerLogin, onDomainChange }) => {
 
         const { baseUrl, addedScheme, error } = normalizeDomain(domain);
         if (error) {
-            setIsDomainInvalid(true);
+            setDomainRejection(error);
             return;
         }
         // Discovery takes baseUrl directly: the state update below has not landed yet.
         showNormalizedDomain(baseUrl, addedScheme);
+
+        // Refused on both platforms. iOS would refuse the request anyway; Android permits
+        // cleartext to every host, so this is the only check there. See addressGroup.
+        if (domainShape.scheme === 'http' && addressGroup(domainShape) === 'other') {
+            setDomainRejection('cleartext-not-local');
+            addLoginBreadcrumb('Refused http to a target outside the local network');
+            return;
+        }
 
         const generation = ++checkGeneration.current;
         setPhase(PHASE.CHECKING);
@@ -154,8 +163,12 @@ const LoginForm = ({ onBearerLogin, onDomainChange }) => {
                 <Text style={styles.fieldNote}>{t('mobile.unencrypted_connection_note')}</Text>
             )}
 
-            {phase === PHASE.DOMAIN && isDomainInvalid && (
-                <Text style={styles.errorText}>{t('mobile.invalid_domain_message')}</Text>
+            {phase === PHASE.DOMAIN && domainRejection && (
+                <Text style={styles.errorText}>
+                    {domainRejection === 'cleartext-not-local'
+                        ? t('mobile.cleartext_not_local_message')
+                        : t('mobile.invalid_domain_message')}
+                </Text>
             )}
 
             {phase === PHASE.DOMAIN && (

@@ -3,8 +3,8 @@
 // so an http:// instance and an https:// one with an internal-CA certificate both fail to connect.
 //
 // One network security config fixes both. It cannot name address ranges (<domain> takes hostnames
-// only), so cleartext is permitted for every host and the login form warns before each http://
-// attempt instead. android:usesCleartextTraffic is deliberately not set: the config takes precedence
+// only), so cleartext is permitted for every host and the login form refuses http:// to anything
+// outside the local network instead (addressGroup in helpers/domainShape.js). android:usesCleartextTraffic is deliberately not set: the config takes precedence
 // over it on API 24+, and setting both leaves it unclear which one is in effect.
 //
 // expo-build-properties exposes usesCleartextTraffic but not networkSecurityConfig, hence this plugin.

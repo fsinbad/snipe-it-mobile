@@ -63,17 +63,19 @@ export function describeDomain(domain) {
     };
 }
 
-// How loud the warning before an http:// login should be. `local` is a target on the user's own
-// network. `other` is everything else, including every dotted hostname, because a name alone
-// cannot say whether it resolves to a private address.
+// Whether the login form allows http:// to a target. `local` is a target on the user's own
+// network, and http to it proceeds under a note that the connection is not encrypted. `other` is
+// everything else, including every dotted hostname, because a name alone cannot say whether it
+// resolves to a private address. The form refuses http to it before any request.
 //
-// This does not decide what is allowed; the platform does. Measured on iOS 26.5 and 27.0 with
-// the app's ATS settings, App Transport Security permits cleartext to private IP literals,
-// unqualified names and .local names, and refuses public IP literals and dotted hostnames.
-// Android makes no such distinction: a network security config cannot express address ranges,
-// so it permits or blocks cleartext for every host alike. On iOS a target on the phone's own
-// subnet, or a .local name, also needs the local network permission; see
-// mayNeedLocalNetworkPermission in oauthClientDiscovery.js.
+// The same rule applies on both platforms. On iOS it matches what App Transport Security already
+// enforces: measured on iOS 26.5 and 27.0 with the app's ATS settings, ATS permits cleartext to
+// private IP literals, unqualified names and .local names, and refuses public IP literals and
+// dotted hostnames. On Android the form is the only enforcement, because a network security
+// config cannot express address ranges and plugins/withNetworkSecurityConfig.js permits
+// cleartext to every host. On iOS a target on the phone's own subnet, or a .local name, also
+// needs the local network permission; see mayNeedLocalNetworkPermission in
+// oauthClientDiscovery.js.
 //
 // CGNAT, IPv6 unique-local and other special-use ranges count as `other` until a user reports one.
 export function addressGroup({ host_type, address_range }) {
