@@ -138,6 +138,18 @@ jobs:
         # be fetched from npm instead.
         run: npx sentry-expo-upload-sourcemaps dist
 
+  update_deployments_gist:
+    name: Update Deployments Gist
+    runs_on: linux-medium
+    after: [build_ios, build_android, submit_ios_fresh, submit_android_fresh, distribute_ios_reuse, distribute_android_reuse, publish_ota]
+    steps:
+      - uses: eas/checkout
+      - uses: eas/use_npm_token
+      # eas-cli resolves the app config, and its plugins, before any command that reads the project.
+      - uses: eas/install_node_modules
+      - name: Rewrite the deployments table
+        run: WORKFLOW_NAME=testflight-build-submit node scripts/update-deployments-gist.mjs
+
   notify_native_success:
     name: ✅ Notify — Native Build Distributed
     runs_on: linux-medium
