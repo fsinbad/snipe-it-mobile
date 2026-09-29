@@ -248,6 +248,7 @@
     "enter_client_id": "Client ID",
     "connection_error_message": "Could not reach your Snipe-IT instance. Check the domain and try again.",
     "local_network_permission_hint": "If you declined local network access, turn it on for this app in Settings → Privacy & Security → Local Network.",
+    "plain_http_hint": "If your server uses plain http, type http:// before the address.",
     "permission_denied": "Permission Denied",
     "permission_denied_message": "You do not have permission to perform this action.",
     "permission_denied_action": "You do not have access to {{action}}.",

@@ -223,6 +223,10 @@ const LoginForm = ({ onBearerLogin, onDomainChange }) => {
                     {mayNeedLocalNetworkPermission(domain) && (
                         <Text style={styles.fieldNote}>{t('mobile.local_network_permission_hint')}</Text>
                     )}
+                    {/* Only for local targets: http:// to anything else is refused before the request. */}
+                    {schemeWasAdded && addressGroup(domainShape) === 'local' && (
+                        <Text style={styles.fieldNote}>{t('mobile.plain_http_hint')}</Text>
+                    )}
                     <Button title={t('mobile.retry')} onPress={() => setPhase(PHASE.DOMAIN)} />
                 </>
             )}
