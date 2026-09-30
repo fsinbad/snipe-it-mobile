@@ -6,9 +6,9 @@ import BearerTokenLogin from "@/components/auth/BearerTokenLogin";
 import { useColors } from "@/hooks/useThemeColors";
 import { Spacing, BorderRadius, Typography } from "@/constants/sizes";
 import { useTranslation } from "react-i18next";
-import { discoverOAuthClient } from "@/helpers/oauthClientDiscovery";
+import { discoverOAuthClient, mayNeedLocalNetworkPermission } from "@/helpers/oauthClientDiscovery";
 import { addLoginBreadcrumb } from "@/helpers/loginTelemetry";
-import { describeDomain } from "@/helpers/domainShape";
+import { addressGroup, describeDomain } from "@/helpers/domainShape";
 import { normalizeDomain } from "@/helpers/normalizeDomain";
 
 const PHASE = {
@@ -29,7 +29,8 @@ const LoginForm = ({ onBearerLogin, onDomainChange }) => {
     const [clientId, setClientId] = useState(null);
     const [showManualOAuth, setShowManualOAuth] = useState(false);
     const [manualClientId, setManualClientId] = useState('');
-    const [isDomainInvalid, setIsDomainInvalid] = useState(false);
+    // Why Continue sent no request: normalizeDomain's error code, or 'cleartext-not-local'.
+    const [domainRejection, setDomainRejection] = useState(null);
     const [schemeWasAdded, setSchemeWasAdded] = useState(false);
     const checkGeneration = useRef(0);
 
@@ -66,7 +67,7 @@ const LoginForm = ({ onBearerLogin, onDomainChange }) => {
         setClientId(null);
         setShowManualOAuth(false);
         setManualClientId('');
-        setIsDomainInvalid(false);
+        setDomainRejection(null);
         setSchemeWasAdded(false);
     };
 
@@ -88,24 +89,39 @@ const LoginForm = ({ onBearerLogin, onDomainChange }) => {
 
     const isDomainBlank = domain.trim() === '';
 
+    // Read from the field on every render, so the note is on screen before Continue is pressed:
+    // pressing it is the consent, and nothing is stored.
+    const domainShape = describeDomain(domain);
+    const isUnencryptedLocal = domainShape.scheme === 'http' && addressGroup(domainShape) === 'local';
+
     const handleContinue = async () => {
         if (isDomainBlank) return;
         // The shape of what was typed is the single most useful thing to know when a login
         // fails, and it identifies nothing. See helpers/domainShape.js.
-        addLoginBreadcrumb('Continue pressed', describeDomain(domain));
+        addLoginBreadcrumb('Continue pressed', domainShape);
 
         const { baseUrl, addedScheme, error } = normalizeDomain(domain);
         if (error) {
-            setIsDomainInvalid(true);
+            setDomainRejection(error);
             return;
         }
         // Discovery takes baseUrl directly: the state update below has not landed yet.
         showNormalizedDomain(baseUrl, addedScheme);
 
+        // Refused on both platforms. iOS would refuse the request anyway; Android permits
+        // cleartext to every host, so this is the only check there. See addressGroup.
+        if (domainShape.scheme === 'http' && addressGroup(domainShape) === 'other') {
+            setDomainRejection('cleartext-not-local');
+            addLoginBreadcrumb('Refused http to a target outside the local network');
+            return;
+        }
+
         const generation = ++checkGeneration.current;
         setPhase(PHASE.CHECKING);
         try {
-            const result = await discoverOAuthClient(baseUrl);
+            const result = await discoverOAuthClient(baseUrl, {
+                isCurrent: () => generation === checkGeneration.current,
+            });
             if (generation !== checkGeneration.current) return;
             if (result) {
                 setClientId(result.clientId);
@@ -143,8 +159,16 @@ const LoginForm = ({ onBearerLogin, onDomainChange }) => {
                 <Text style={styles.fieldNote}>{t('mobile.domain_assumed_https')}</Text>
             )}
 
-            {phase === PHASE.DOMAIN && isDomainInvalid && (
-                <Text style={styles.errorText}>{t('mobile.invalid_domain_message')}</Text>
+            {isUnencryptedLocal && (
+                <Text style={styles.fieldNote}>{t('mobile.unencrypted_connection_note')}</Text>
+            )}
+
+            {phase === PHASE.DOMAIN && domainRejection && (
+                <Text style={styles.errorText}>
+                    {domainRejection === 'cleartext-not-local'
+                        ? t('mobile.cleartext_not_local_message')
+                        : t('mobile.invalid_domain_message')}
+                </Text>
             )}
 
             {phase === PHASE.DOMAIN && (
@@ -196,6 +220,13 @@ const LoginForm = ({ onBearerLogin, onDomainChange }) => {
             {phase === PHASE.ERROR && (
                 <>
                     <Text style={styles.errorText}>{t('mobile.connection_error_message')}</Text>
+                    {mayNeedLocalNetworkPermission(domain) && (
+                        <Text style={styles.fieldNote}>{t('mobile.local_network_permission_hint')}</Text>
+                    )}
+                    {/* Only for local targets: http:// to anything else is refused before the request. */}
+                    {schemeWasAdded && addressGroup(domainShape) === 'local' && (
+                        <Text style={styles.fieldNote}>{t('mobile.plain_http_hint')}</Text>
+                    )}
                     <Button title={t('mobile.retry')} onPress={() => setPhase(PHASE.DOMAIN)} />
                 </>
             )}

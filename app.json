@@ -215,7 +215,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "./plugins/withNetworkSecurityConfig"
     ],
     "ios": {
       "supportsTablet": true,
@@ -224,7 +225,8 @@
         "webcredentials:*.snipe-it.io"
       ],
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSLocalNetworkUsageDescription": "Used to connect to your Snipe-IT instance when it is on your local network."
       }
     },
     "android": {
